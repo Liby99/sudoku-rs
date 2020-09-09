@@ -122,12 +122,12 @@ macro_rules! sudoku4x4 {
     $u41: literal , $u42: literal , $u43: literal , $u44: literal $(;)? )
   => {
     {
-      use Board4x4Element::*;
+      type E = Board4x4Element;
       Board4x4::new([
-        Board4x4Element::from($u11), Board4x4Element::from($u12), Board4x4Element::from($u13), Board4x4Element::from($u14),
-        Board4x4Element::from($u21), Board4x4Element::from($u22), Board4x4Element::from($u23), Board4x4Element::from($u24),
-        Board4x4Element::from($u31), Board4x4Element::from($u32), Board4x4Element::from($u33), Board4x4Element::from($u34),
-        Board4x4Element::from($u41), Board4x4Element::from($u42), Board4x4Element::from($u43), Board4x4Element::from($u44),
+        E::from($u11), E::from($u12), E::from($u13), E::from($u14),
+        E::from($u21), E::from($u22), E::from($u23), E::from($u24),
+        E::from($u31), E::from($u32), E::from($u33), E::from($u34),
+        E::from($u41), E::from($u42), E::from($u43), E::from($u44),
       ])
     }
   }

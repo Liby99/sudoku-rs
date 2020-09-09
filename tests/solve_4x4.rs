@@ -30,9 +30,9 @@ fn solve_pre_filled_4x4_digged() {
     4, 3, 2, 1;
     2, 1, 4, 3;
   ];
-  board.put_random_unknowns(4);
-  println!("{}", board.to_string());
-  let mut solutions = board.solve(true);
-  println!("{}", solutions.next().unwrap().to_string());
-  assert!(solutions.next().is_none());
+  board.put_random_unknowns(13);
+  println!("Digged: {:?}", board);
+  for solution in board.solve(true) {
+    println!("{:?}", solution);
+  }
 }

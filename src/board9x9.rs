@@ -134,6 +134,35 @@ impl std::fmt::Debug for Board9x9 {
   }
 }
 
+#[macro_export]
+macro_rules! sudoku9x9 {
+  ( $u11: literal , $u12: literal , $u13: literal , $u14: literal , $u15: literal , $u16: literal , $u17: literal , $u18: literal , $u19: literal ;
+    $u21: literal , $u22: literal , $u23: literal , $u24: literal , $u25: literal , $u26: literal , $u27: literal , $u28: literal , $u29: literal ;
+    $u31: literal , $u32: literal , $u33: literal , $u34: literal , $u35: literal , $u36: literal , $u37: literal , $u38: literal , $u39: literal ;
+    $u41: literal , $u42: literal , $u43: literal , $u44: literal , $u45: literal , $u46: literal , $u47: literal , $u48: literal , $u49: literal ;
+    $u51: literal , $u52: literal , $u53: literal , $u54: literal , $u55: literal , $u56: literal , $u57: literal , $u58: literal , $u59: literal ;
+    $u61: literal , $u62: literal , $u63: literal , $u64: literal , $u65: literal , $u66: literal , $u67: literal , $u68: literal , $u69: literal ;
+    $u71: literal , $u72: literal , $u73: literal , $u74: literal , $u75: literal , $u76: literal , $u77: literal , $u78: literal , $u79: literal ;
+    $u81: literal , $u82: literal , $u83: literal , $u84: literal , $u85: literal , $u86: literal , $u87: literal , $u88: literal , $u89: literal ;
+    $u91: literal , $u92: literal , $u93: literal , $u94: literal , $u95: literal , $u96: literal , $u97: literal , $u98: literal , $u99: literal $(;)? )
+  => {
+    {
+      type E = Board9x9Element;
+      Board9x9::new([
+        E::from($u11), E::from($u12), E::from($u13), E::from($u14), E::from($u15), E::from($u16), E::from($u17), E::from($u18), E::from($u19),
+        E::from($u21), E::from($u22), E::from($u23), E::from($u24), E::from($u25), E::from($u26), E::from($u27), E::from($u28), E::from($u29),
+        E::from($u31), E::from($u32), E::from($u33), E::from($u34), E::from($u35), E::from($u36), E::from($u37), E::from($u38), E::from($u39),
+        E::from($u41), E::from($u42), E::from($u43), E::from($u44), E::from($u45), E::from($u46), E::from($u47), E::from($u48), E::from($u49),
+        E::from($u51), E::from($u52), E::from($u53), E::from($u54), E::from($u55), E::from($u56), E::from($u57), E::from($u58), E::from($u59),
+        E::from($u61), E::from($u62), E::from($u63), E::from($u64), E::from($u65), E::from($u66), E::from($u67), E::from($u68), E::from($u69),
+        E::from($u71), E::from($u72), E::from($u73), E::from($u74), E::from($u75), E::from($u76), E::from($u77), E::from($u78), E::from($u79),
+        E::from($u81), E::from($u82), E::from($u83), E::from($u84), E::from($u85), E::from($u86), E::from($u87), E::from($u88), E::from($u89),
+        E::from($u91), E::from($u92), E::from($u93), E::from($u94), E::from($u95), E::from($u96), E::from($u97), E::from($u98), E::from($u99),
+      ])
+    }
+  }
+}
+
 impl Board for Board9x9 {
   type Element = Board9x9Element;
 

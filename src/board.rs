@@ -204,8 +204,10 @@ pub trait Board : Sized + Clone {
   /// Put (`amount`) unknowns at random locations inside the board
   fn put_random_unknowns(&mut self, amount: usize) {
     let mut all_slots = Self::slots().collect::<Vec<_>>();
+    println!("{:?}", all_slots);
     all_slots.shuffle(&mut thread_rng());
     for slot in &all_slots[..amount] {
+      println!("HHH {:?}", slot);
       self.set(slot, Self::Element::default())
     }
   }
@@ -332,19 +334,24 @@ impl Iterator for SlotIterator {
   type Item = Slot;
 
   fn next(&mut self) -> Option<Self::Item> {
-    if self.i < self.size && self.j < self.size {
-      let result = Some((self.i, self.j));
-      self.j += 1;
-      result
-    } else {
-      self.j = 0;
-      if self.i < self.size {
+    if self.i < self.size {
+      if self.j < self.size {
         let result = Some((self.i, self.j));
-        self.i += 1;
+        self.j += 1;
         result
       } else {
-        None
+        self.j = 0;
+        self.i += 1;
+        if self.i < self.size {
+          let result = Some((self.i, self.j));
+          self.j += 1;
+          result
+        } else {
+          None
+        }
       }
+    } else {
+      None
     }
   }
 }
@@ -400,19 +407,24 @@ impl Iterator for BlockSlotIterator {
   type Item = Slot;
 
   fn next(&mut self) -> Option<Self::Item> {
-    if self.i < self.block_size && self.j < self.block_size {
-      let result = Some((self.i + self.begin.0, self.j + self.begin.1));
-      self.j += 1;
-      result
-    } else {
-      self.j = 0;
-      if self.i < self.block_size {
+    if self.i < self.block_size {
+      if self.j < self.block_size {
         let result = Some((self.i + self.begin.0, self.j + self.begin.1));
-        self.i += 1;
+        self.j += 1;
         result
       } else {
-        None
+        self.j = 0;
+        self.i += 1;
+        if self.i < self.block_size {
+          let result = Some((self.i + self.begin.0, self.j + self.begin.1));
+          self.j += 1;
+          result
+        } else {
+          None
+        }
       }
+    } else {
+      None
     }
   }
 }
