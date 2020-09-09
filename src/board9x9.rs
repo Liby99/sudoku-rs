@@ -38,6 +38,12 @@ impl BoardElement for Board9x9Element {
 #[derive(Copy, Clone, Default)]
 pub struct Board9x9ElementSet(u16);
 
+impl std::fmt::Display for Board9x9ElementSet {
+  fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+    formatter.write_fmt(format_args!("{:0>8b}", self.0))
+  }
+}
+
 impl ElementSet for Board9x9ElementSet {
   type Element = Board9x9Element;
 
@@ -50,7 +56,11 @@ impl ElementSet for Board9x9ElementSet {
   }
 
   fn count(&self) -> usize {
-    (self.0 & 1 + (self.0 >> 1) & 1 + (self.0 >> 2) & 1 + (self.0 >> 3) & 1 + (self.0 >> 4) & 1 + (self.0 >> 5) & 1 + (self.0 >> 6) & 1 + (self.0 >> 7) & 1 + (self.0 >> 8) & 1) as usize
+    let mut count = 0;
+    for i in 0..9 {
+      count += (self.0 >> i) & 1;
+    }
+    count as usize
   }
 
   fn insert(&mut self, elem: &Self::Element) {

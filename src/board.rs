@@ -11,7 +11,7 @@ pub trait BoardElement : Copy + Clone + Default + ToString {
   }
 }
 
-pub trait ElementSet : Default + Copy + Clone {
+pub trait ElementSet : Default + Copy + Clone + std::fmt::Display {
   type Element : BoardElement;
 
   fn intersect(&self, other: &Self) -> Self;
@@ -52,7 +52,7 @@ pub trait Board : Sized + Clone {
         } else if i < Self::size() - 1 {
           s += ";\n "
         } else {
-          s += ";\n "
+          s += "]"
         }
       }
     }
@@ -208,6 +208,7 @@ impl<B> Iterator for BoardSolutions<B> where B : Board {
       // If still satisfied, check empty slots
       if board.has_empty_slot() {
 
+        // Cache the least constraint element
         let mut least_constrained : Option<(usize, Slot, B::ElementSet)> = None;
 
         // Get all the empty slots
@@ -255,7 +256,7 @@ impl Iterator for SlotIterator {
   type Item = Slot;
 
   fn next(&mut self) -> Option<Self::Item> {
-    if self.j < self.size {
+    if self.i < self.size && self.j < self.size {
       let result = Some((self.i, self.j));
       self.j += 1;
       result
@@ -323,7 +324,7 @@ impl Iterator for BlockSlotIterator {
   type Item = Slot;
 
   fn next(&mut self) -> Option<Self::Item> {
-    if self.j < self.block_size {
+    if self.i < self.block_size && self.j < self.block_size {
       let result = Some((self.i + self.begin.0, self.j + self.begin.1));
       self.j += 1;
       result
