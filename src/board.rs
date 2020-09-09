@@ -1,47 +1,73 @@
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
+/// Slot is a 2-tuple containing coordinate of the slot
 pub type Slot = (usize, usize);
 
+/// A board element needs to specify an `is_unknown` function.
+/// This will be used when implementing the `Board` trait
 pub trait BoardElement : Copy + Clone + Default + ToString {
+
+  /// Check if this board element is unknown
   fn is_unknown(&self) -> bool;
 
+  /// Check if this board element is an answer, basically it is the inverse of `is_unknown`
   fn is_answer(&self) -> bool {
     !self.is_unknown()
   }
 }
 
+/// An ElementSet is a set of elements, usually implemented in bitset format.
 pub trait ElementSet : Default + Copy + Clone + std::fmt::Display {
   type Element : BoardElement;
 
+  /// Get the intersection between two element sets
   fn intersect(&self, other: &Self) -> Self;
 
+  /// Get the complement of this set over the whole set of Element
   fn complement(&self) -> Self;
 
+  /// Count the number of elements inside the set
   fn count(&self) -> usize;
 
+  /// Insert a new element into the set
   fn insert(&mut self, elem: &Self::Element);
 
+  /// Get all the elements from the set, in a `Vec` form
   fn elements(&self) -> Vec<Self::Element>;
 }
 
+/// The trait for a Sudoku Board
 pub trait Board : Sized + Clone {
+
+  /// You need to specify the element that is being stored inside the board. It
+  /// has to be a `BoardElement`
   type Element : BoardElement;
 
+  /// You need to specify the element set type. Its internal Element type must
+  /// be the same as the `Element` type for this `Board`
   type ElementSet : ElementSet<Element = Self::Element>;
 
+  /// You need to specify the overall size of the sudoku board.
+  /// e.g. The size for 4x4 board is 4; the size for 9x9 board is 9
   fn size() -> usize;
 
+  /// You need to specify the size for a block inside the board
+  /// e.g. The block_size for 4x4 board is 2; the block_size for 9x9 board is 3
   fn block_size() -> usize;
 
+  /// You need to implement getting element by slot
   fn get(&self, slot: &Slot) -> &Self::Element;
 
+  /// You need to implement getting mutable element by slot
   fn get_mut(&mut self, slot: &Slot) -> &mut Self::Element;
 
+  /// Setting an item at the given slot
   fn set(&mut self, slot: &Slot, item: Self::Element) {
     *self.get_mut(slot) = item;
   }
 
+  /// Turn the whole board into a string for display
   fn to_string(&self) -> String {
     let mut s = "[".to_string();
     for i in 0..Self::size() {
@@ -59,15 +85,25 @@ pub trait Board : Sized + Clone {
     s
   }
 
+  /// Get all the slots
+  ///
+  /// ```
+  /// for slot in Board4x4::slots() {
+  ///   // ...
+  /// }
+  /// ```
   fn slots() -> SlotIterator {
     SlotIterator { size: Self::size(), i: 0, j: 0 }
   }
 
-  fn empty_slots(&self) -> Vec<Slot> {
+  /// Get all the unknown slots (returns a vector of `Slot`)
+  fn unknown_slots(&self) -> Vec<Slot> {
     Self::slots().filter(|slot| self.get(&slot).is_unknown()).collect()
   }
 
-  fn has_empty_slot(&self) -> bool {
+  /// Check if the board contains at least one unknown slot
+  /// (slot containing unknown element value)
+  fn has_unknown_slot(&self) -> bool {
     for slot in Self::slots() {
       if self.get(&slot).is_unknown() {
         return true;
@@ -76,30 +112,45 @@ pub trait Board : Sized + Clone {
     false
   }
 
+  /// Get all the slots in the given row
   fn row_slots(row: usize) -> RowSlotIterator {
     RowSlotIterator { size: Self::size(), row, j: 0 }
   }
 
+  /// Get all the slots in the given column
   fn column_slots(column: usize) -> ColumnSlotIterator {
     ColumnSlotIterator { size: Self::size(), i: 0, column }
   }
 
+  /// Get all the slots in the block that the given slot resides in
   fn block_slots(slot: &Slot) -> BlockSlotIterator {
     let x = slot.0 - slot.0 % Self::block_size();
     let y = slot.1 - slot.1 % Self::block_size();
     BlockSlotIterator { block_size: Self::block_size(), begin: (x, y), i: 0, j: 0 }
   }
 
+  /// Get the diagonal slots on the diagonal that the given slot resides in.
+  ///
+  /// There are several cases:
+  /// - Slot is on both diagonals
+  /// - Slot is on only major diagonal
+  /// - Slot is on only minor diagonal
+  /// - Slot is on neither
   fn diagonal_slots(slot: &Slot) -> DiagonalSlotIterator {
-    if slot.0 == slot.1 {
+    let on_major = slot.0 == slot.1;
+    let on_minor = slot.0 == Self::size() - slot.1 - 1;
+    if on_major && on_minor {
+      DiagonalSlotIterator::Both { size: Self::size(), major: true, i: 0 }
+    } else if on_major {
       DiagonalSlotIterator::Major { size: Self::size(), i: 0 }
-    } else if slot.0 == Self::size() - slot.1 - 1 {
+    } else if on_minor {
       DiagonalSlotIterator::Minor { size: Self::size(), i: 0 }
     } else {
       DiagonalSlotIterator::Nothing
     }
   }
 
+  /// Get the element set for a given row
   fn row_elements(&self, row: usize) -> Self::ElementSet {
     let mut set = Self::ElementSet::default();
     for slot in Self::row_slots(row) {
@@ -108,6 +159,7 @@ pub trait Board : Sized + Clone {
     set
   }
 
+  /// Get the element set for a given column
   fn column_elements(&self, column: usize) -> Self::ElementSet {
     let mut set = Self::ElementSet::default();
     for slot in Self::column_slots(column) {
@@ -116,6 +168,7 @@ pub trait Board : Sized + Clone {
     set
   }
 
+  /// Get the element set for a block that the slot resides in
   fn block_elements(&self, slot: &Slot) -> Self::ElementSet {
     let mut set = Self::ElementSet::default();
     for slot in Self::block_slots(slot) {
@@ -124,6 +177,7 @@ pub trait Board : Sized + Clone {
     set
   }
 
+  /// Get the diagonal element set for the diagonal(s) that the slot resides in
   fn diagonal_elements(&self, slot: &Slot) -> Self::ElementSet {
     let mut set = Self::ElementSet::default();
     for slot in Self::diagonal_slots(slot) {
@@ -132,6 +186,13 @@ pub trait Board : Sized + Clone {
     set
   }
 
+  /// Get all the possible answers
+  ///
+  /// A possible answer for a given slot is a number that is not appearing inside
+  /// its row, its column, its block, and its diagonal(s).
+  ///
+  /// Algorithm: get the elements on row, column, block, and diagonal, pick their
+  /// complement, and then construct an intersection.
   fn possible_answers(&self, slot: &Slot) -> Self::ElementSet {
     let row_ans = self.row_elements(slot.0).complement();
     let col_ans = self.column_elements(slot.1).complement();
@@ -140,6 +201,7 @@ pub trait Board : Sized + Clone {
     row_ans.intersect(&col_ans).intersect(&blk_ans).intersect(&diag_ans)
   }
 
+  /// Put (`amount`) unknowns at random locations inside the board
   fn put_random_unknowns(&mut self, amount: usize) {
     let mut all_slots = Self::slots().collect::<Vec<_>>();
     all_slots.shuffle(&mut thread_rng());
@@ -148,6 +210,12 @@ pub trait Board : Sized + Clone {
     }
   }
 
+  /// Find the slots that only contain one possible answer, and fill that answer
+  /// in.
+  ///
+  /// If at least one slot is modified during this process, the result is "Modified"
+  /// If no slot is modified, the result is "Unmodified"
+  /// If there's one slot that contain no possible answer, then the result is "Unsatisfied"
   fn put_determined_answers(&mut self) -> FillResult {
     let mut modified = false;
     for slot in Self::slots() {
@@ -169,8 +237,15 @@ pub trait Board : Sized + Clone {
     else { FillResult::Unmodified }
   }
 
-  fn solve(self, shuffle: bool) -> BoardSolutions<Self> {
-    BoardSolutions { stack: vec![self], shuffle }
+  /// Solve the board by returning a solutions iterator.
+  ///
+  /// ```
+  /// for solution in board.solve(true) {
+  ///   // ...
+  /// }
+  /// ```
+  fn solve(&self, shuffle: bool) -> BoardSolutions<Self> {
+    BoardSolutions { stack: vec![self.clone()], shuffle }
   }
 }
 
@@ -181,6 +256,7 @@ pub enum FillResult {
   Unsatisfied,
 }
 
+/// Block solutions iterator
 pub struct BoardSolutions<B> where B : Board {
   stack: Vec<B>,
   shuffle: bool,
@@ -206,13 +282,13 @@ impl<B> Iterator for BoardSolutions<B> where B : Board {
       }
 
       // If still satisfied, check empty slots
-      if board.has_empty_slot() {
+      if board.has_unknown_slot() {
 
         // Cache the least constraint element
         let mut least_constrained : Option<(usize, Slot, B::ElementSet)> = None;
 
         // Get all the empty slots
-        let mut empty_slots = board.empty_slots();
+        let mut empty_slots = board.unknown_slots();
         if self.shuffle { empty_slots.shuffle(&mut thread_rng()) }
 
         // Iterate all slots to find least constraint one
@@ -342,6 +418,7 @@ impl Iterator for BlockSlotIterator {
 }
 
 pub enum DiagonalSlotIterator {
+  Both { size: usize, major: bool, i: usize },
   Major { size: usize, i: usize },
   Minor { size: usize, i: usize },
   Nothing
@@ -352,6 +429,30 @@ impl Iterator for DiagonalSlotIterator {
 
   fn next(&mut self) -> Option<Self::Item> {
     match self {
+      Self::Both { size, major, i } => {
+        if *major {
+          if i < size {
+            let result = Some((*i, *i));
+            *i += 1;
+            result
+          } else {
+            *major = false;
+            *i = 1;
+            Some((*i, *size - 1))
+          }
+        } else {
+          if *i == *size - 1 - *i {
+            *i += 1;
+          }
+          if i < size {
+            let result = Some((*i, *size - *i - 1));
+            *i += 1;
+            result
+          } else {
+            None
+          }
+        }
+      }
       Self::Major { size, i } => {
         if i < size {
           let result = Some((i.clone(), i.clone()));
