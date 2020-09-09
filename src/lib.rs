@@ -1,5 +1,9 @@
+#![feature(concat_idents)]
+
 mod board;
+#[macro_use]
 mod board4x4;
+#[macro_use]
 mod board9x9;
 
 pub use board::*;

@@ -3,6 +3,24 @@ use crate::board::*;
 #[derive(Copy, Clone)]
 pub enum Board9x9Element { U0, U1, U2, U3, U4, U5, U6, U7, U8, U9 }
 
+impl From<u8> for Board9x9Element {
+  fn from(n: u8) -> Self {
+    match n {
+      0 => Self::U0,
+      1 => Self::U1,
+      2 => Self::U2,
+      3 => Self::U3,
+      4 => Self::U4,
+      5 => Self::U5,
+      6 => Self::U6,
+      7 => Self::U7,
+      8 => Self::U8,
+      9 => Self::U9,
+      _ => panic!("Invalid board 4x4 element {}", n)
+    }
+  }
+}
+
 impl ToString for Board9x9Element {
   fn to_string(&self) -> String {
     match self {
@@ -98,9 +116,21 @@ pub struct Board9x9 {
   board: [Board9x9Element; 81],
 }
 
+impl Board9x9 {
+  pub fn new(board: [Board9x9Element; 81]) -> Self {
+    Self { board }
+  }
+}
+
 impl Default for Board9x9 {
   fn default() -> Self {
     Self { board: [Board9x9Element::default(); 81] }
+  }
+}
+
+impl std::fmt::Debug for Board9x9 {
+  fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fmt.write_str(&self.to_string())
   }
 }
 

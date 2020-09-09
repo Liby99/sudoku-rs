@@ -3,6 +3,19 @@ use crate::board::*;
 #[derive(Copy, Clone)]
 pub enum Board4x4Element { U0, U1, U2, U3, U4 }
 
+impl From<u8> for Board4x4Element {
+  fn from(n: u8) -> Self {
+    match n {
+      0 => Self::U0,
+      1 => Self::U1,
+      2 => Self::U2,
+      3 => Self::U3,
+      4 => Self::U4,
+      _ => panic!("Invalid board 4x4 element {}", n)
+    }
+  }
+}
+
 impl ToString for Board4x4Element {
   fn to_string(&self) -> String {
     match self {
@@ -83,9 +96,40 @@ pub struct Board4x4 {
   board: [Board4x4Element; 16],
 }
 
+impl Board4x4 {
+  pub fn new(board: [Board4x4Element; 16]) -> Self {
+    Self { board }
+  }
+}
+
 impl Default for Board4x4 {
   fn default() -> Self {
     Self { board: [Board4x4Element::default(); 16] }
+  }
+}
+
+impl std::fmt::Debug for Board4x4 {
+  fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fmt.write_str(&self.to_string())
+  }
+}
+
+#[macro_export]
+macro_rules! sudoku4x4 {
+  ( $u11: literal , $u12: literal , $u13: literal , $u14: literal ;
+    $u21: literal , $u22: literal , $u23: literal , $u24: literal ;
+    $u31: literal , $u32: literal , $u33: literal , $u34: literal ;
+    $u41: literal , $u42: literal , $u43: literal , $u44: literal $(;)? )
+  => {
+    {
+      use Board4x4Element::*;
+      Board4x4::new([
+        Board4x4Element::from($u11), Board4x4Element::from($u12), Board4x4Element::from($u13), Board4x4Element::from($u14),
+        Board4x4Element::from($u21), Board4x4Element::from($u22), Board4x4Element::from($u23), Board4x4Element::from($u24),
+        Board4x4Element::from($u31), Board4x4Element::from($u32), Board4x4Element::from($u33), Board4x4Element::from($u34),
+        Board4x4Element::from($u41), Board4x4Element::from($u42), Board4x4Element::from($u43), Board4x4Element::from($u44),
+      ])
+    }
   }
 }
 
