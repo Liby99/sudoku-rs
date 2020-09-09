@@ -38,6 +38,12 @@ impl ToString for Board9x9Element {
   }
 }
 
+impl std::fmt::Debug for Board9x9Element {
+  fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fmt.write_str(&self.to_string())
+  }
+}
+
 impl Default for Board9x9Element {
   fn default() -> Self {
     Self::U0

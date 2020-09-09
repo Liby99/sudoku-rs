@@ -28,6 +28,12 @@ impl ToString for Board4x4Element {
   }
 }
 
+impl std::fmt::Debug for Board4x4Element {
+  fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fmt.write_str(&self.to_string())
+  }
+}
+
 impl Default for Board4x4Element {
   fn default() -> Self {
     Self::U0

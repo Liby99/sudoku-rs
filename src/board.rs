@@ -6,7 +6,7 @@ pub type Slot = (usize, usize);
 
 /// A board element needs to specify an `is_unknown` function.
 /// This will be used when implementing the `Board` trait
-pub trait BoardElement : Copy + Clone + Default + ToString {
+pub trait BoardElement : Copy + Clone + Default + std::fmt::Debug + ToString {
 
   /// Check if this board element is unknown
   fn is_unknown(&self) -> bool;
@@ -38,7 +38,7 @@ pub trait ElementSet : Default + Copy + Clone + std::fmt::Display {
 }
 
 /// The trait for a Sudoku Board
-pub trait Board : Sized + Clone {
+pub trait Board : Sized + Clone + std::fmt::Debug {
 
   /// You need to specify the element that is being stored inside the board. It
   /// has to be a `BoardElement`
@@ -197,17 +197,18 @@ pub trait Board : Sized + Clone {
     let row_ans = self.row_elements(slot.0).complement();
     let col_ans = self.column_elements(slot.1).complement();
     let blk_ans = self.block_elements(slot).complement();
-    let diag_ans = self.diagonal_elements(slot).complement();
-    row_ans.intersect(&col_ans).intersect(&blk_ans).intersect(&diag_ans)
+    row_ans.intersect(&col_ans).intersect(&blk_ans)
+
+    // Ignoring diagonal rule for now
+    // let diag_ans = self.diagonal_elements(slot).complement();
+    // row_ans.intersect(&col_ans).intersect(&blk_ans).intersect(&diag_ans)
   }
 
   /// Put (`amount`) unknowns at random locations inside the board
   fn put_random_unknowns(&mut self, amount: usize) {
     let mut all_slots = Self::slots().collect::<Vec<_>>();
-    println!("{:?}", all_slots);
     all_slots.shuffle(&mut thread_rng());
     for slot in &all_slots[..amount] {
-      println!("HHH {:?}", slot);
       self.set(slot, Self::Element::default())
     }
   }
@@ -224,7 +225,9 @@ pub trait Board : Sized + Clone {
       if self.get(&slot).is_unknown() {
         let answers = self.possible_answers(&slot);
         match answers.count() {
-          0 => return FillResult::Unsatisfied,
+          0 => {
+            return FillResult::Unsatisfied
+          },
           1 => {
             for answer in answers.elements() {
               self.set(&slot, answer);
