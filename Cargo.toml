@@ -1,9 +1,12 @@
 [package]
 name = "sudoku-rs"
 version = "0.1.0"
-authors = ["Ziyang Li"]
+authors = ["Ziyang Li <liby99@seas.upenn.edu>"]
 edition = "2018"
-description = "Sudoku solving library & command line executables"
+description = "Sudoku solving library & executables"
+license = "MIT"
+keywords = ["llvm", "ir"]
+repository = "https://github.com/liby99/sudoku-rs"
 
 [dependencies]
 rand = "0.7"
