@@ -32,11 +32,11 @@ struct Options {
   num_solutions: Option<usize>,
 
   /// Input json file name. If not specified, the input will come from command line
-  #[structopt(short = "i", long, name = "FILE")]
+  #[structopt(short = "i", long, name = "INPUT")]
   input: Option<String>,
 
   /// Output json file name. If not specified, the output will be printed on screen
-  #[structopt(short = "o", long, name = "FILE")]
+  #[structopt(short = "o", long, name = "OUTPUT")]
   output: Option<String>,
 }
 
