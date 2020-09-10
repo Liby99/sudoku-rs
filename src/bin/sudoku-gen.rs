@@ -1,9 +1,7 @@
-use sudoku_rs::*;
+use sudoku_rs::{*, utils::Output};
 
 use structopt::StructOpt;
 use rand::{Rng, SeedableRng, rngs::StdRng};
-use std::fs::File;
-use std::io::prelude::*;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "sudoku-gen")]
@@ -54,106 +52,6 @@ struct Options {
   output: Option<String>,
 }
 
-enum Output {
-  File(File),
-  Stdout,
-}
-
-impl Output {
-  fn new(options: &Options) -> Result<Self, String> {
-    match &options.output {
-      Some(filename) => {
-        let file = File::create(filename).map_err(|_| "Cannot create file")?;
-        Ok(Self::File(file))
-      },
-      None => {
-        Ok(Self::Stdout)
-      }
-    }
-  }
-
-  fn is_file(&self) -> bool {
-    match self {
-      Self::File(_) => true,
-      _ => false,
-    }
-  }
-
-  fn write(&mut self, s: &str) -> Result<(), String> {
-    match self {
-      Self::File(file) => {
-        file.write_all(s.as_bytes()).map_err(|_| "Cannot write to file".to_string())
-      },
-      _ => {
-        println!("{}", s);
-        Ok(())
-      }
-    }
-  }
-
-  fn output_init(&mut self) -> Result<(), String> {
-    if self.is_file() {
-      self.write("[")
-    } else {
-      Ok(())
-    }
-  }
-
-  fn output_separator(&mut self) -> Result<(), String> {
-    if self.is_file() {
-      self.write(",")
-    } else {
-      Ok(())
-    }
-  }
-
-  fn output_finish(&mut self) -> Result<(), String> {
-    if self.is_file() {
-      self.write("]")
-    } else {
-      Ok(())
-    }
-  }
-
-  fn board_to_json_str<B: Board>(board: &B) -> String {
-    let mut s = "[".to_string();
-    for row in 0..B::size() {
-      if row > 0 { s += ","; }
-      s += "[";
-      for col in 0..B::size() {
-        if col > 0 { s += ","; }
-        s += board.get(&(row, col)).to_string().as_str();
-      }
-      s += "]";
-    }
-    s += "]";
-    s
-  }
-
-  fn output_board<B: Board>(&mut self, board: &B) -> Result<(), String> {
-    if self.is_file() {
-      self.write(&Self::board_to_json_str(board))
-    } else {
-      self.write(&board.to_string())
-    }
-  }
-
-  fn output_board_with_solution<B: Board>(&mut self, board: &B, solution: &B) -> Result<(), String> {
-    if self.is_file() {
-      self.write("{\"q\":")?;
-      self.write(&Self::board_to_json_str(board))?;
-      self.write(",\"a\":")?;
-      self.write(&Self::board_to_json_str(solution))?;
-      self.write("}")
-    } else {
-      self.write("Question: ")?;
-      self.write(&board.to_string())?;
-      self.write("Solution: ")?;
-      self.write(&solution.to_string())
-    }
-  }
-}
-
 fn output_solution<B: Board>(
   output: &mut Output,
   rng: &mut StdRng,
@@ -202,7 +100,7 @@ fn output_solution<B: Board>(
 }
 
 fn execute_on_board<B: Board>(board: B, options: Options) -> Result<(), String> {
-  let mut output = Output::new(&options)?;
+  let mut output = Output::new(&options.output)?;
   let mut rng = match options.seed {
     Some(seed) => StdRng::seed_from_u64(seed),
     None => StdRng::from_entropy(),

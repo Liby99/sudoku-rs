@@ -106,6 +106,14 @@ impl Board4x4 {
   pub fn new(board: [Board4x4Element; 16]) -> Self {
     Self { board }
   }
+
+  pub fn from_u8_vec(v: &Vec<u8>) -> Self {
+    let mut board = [Board4x4Element::default(); 16];
+    for i in 0..16 {
+      board[i] = Board4x4Element::from(v[i]);
+    }
+    Self { board }
+  }
 }
 
 impl Default for Board4x4 {

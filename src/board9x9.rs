@@ -126,6 +126,14 @@ impl Board9x9 {
   pub fn new(board: [Board9x9Element; 81]) -> Self {
     Self { board }
   }
+
+  pub fn from_u8_vec(v: &Vec<u8>) -> Self {
+    let mut board = [Board9x9Element::default(); 81];
+    for i in 0..81 {
+      board[i] = Board9x9Element::from(v[i]);
+    }
+    Self { board }
+  }
 }
 
 impl Default for Board9x9 {
