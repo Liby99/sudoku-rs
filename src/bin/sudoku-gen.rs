@@ -6,10 +6,10 @@ use std::fs::File;
 use std::io::prelude::*;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "sudoku_gen")]
+#[structopt(name = "sudoku-gen")]
 struct Options {
   /// Board size. Could either be 4 or 9 for now
-  #[structopt(long, default_value = "9", name = "SIZE")]
+  #[structopt(short = "s", long, default_value = "9", name = "SIZE")]
   board_size: usize,
 
   /// The amount of solutions we want. If not specified, will fetch
@@ -22,7 +22,7 @@ struct Options {
   no_random: bool,
 
   /// The random seed being used in the solution generation process
-  #[structopt(long)]
+  #[structopt(long, name = "SEED")]
   seed: Option<u64>,
 
   /// If specified, will generate questions instead of full solutions
@@ -50,7 +50,7 @@ struct Options {
   max_num_unknowns: usize,
 
   /// Output json file name. If not specified, the output will be printed on screen
-  #[structopt(short = "o", long)]
+  #[structopt(short = "o", long, name = "FILE")]
   output: Option<String>,
 }
 
@@ -154,6 +154,53 @@ impl Output {
   }
 }
 
+fn output_solution<B: Board>(
+  output: &mut Output,
+  rng: &mut StdRng,
+  options: &Options,
+  i: usize,
+  solution: B,
+) -> Result<(), String> {
+
+  // Check if we need to generate questions
+  if options.generate_questions {
+
+    // Find out the number of questions to generate
+    for j in 0..options.num_questions_per_solution {
+
+      // Output the separator
+      if i > 0 || j > 0 {
+        output.output_separator()?;
+      }
+
+      // Find out the number
+      let num_unknowns = if options.random_num_unknowns {
+        rng.gen_range(options.min_num_unknowns, options.max_num_unknowns)
+      } else {
+        options.num_unknowns
+      };
+
+      // Generate
+      let mut question = solution.clone();
+      question.put_random_unknowns(num_unknowns);
+
+      // Output the question & solution
+      output.output_board_with_solution(&question, &solution)?;
+    }
+
+    Ok(())
+  } else {
+
+    // Output the separator
+    if i > 0 {
+      output.output_separator()?;
+    }
+
+    // If not, directly output the solution
+    output.output_board(&solution)
+  }
+}
+
 fn execute_on_board<B: Board>(board: B, options: Options) -> Result<(), String> {
   let mut output = Output::new(&options)?;
   let mut rng = match options.seed {
@@ -175,49 +222,21 @@ fn execute_on_board<B: Board>(board: B, options: Options) -> Result<(), String> 
   };
 
   // Generate solutions
-  let solutions : Vec<_> = match options.num_solutions {
-    Some(amount) => solution_iter.take(amount).collect(),
-    _ => solution_iter.collect()
-  };
-
-  // Output each solution
-  for (i, solution) in solutions.into_iter().enumerate() {
-    // Output the separator
-    if i > 0 {
-      output.output_separator()?;
-    }
-
-    // Check if we need to generate questions
-    if options.generate_questions {
-
-      // Find out the number of questions to generate
-      for _ in 0..options.num_questions_per_solution {
-
-        // Find out the number
-        let num_unknowns = if options.random_num_unknowns {
-          rng.gen_range(options.min_num_unknowns, options.max_num_unknowns)
-        } else {
-          options.num_unknowns
-        };
-
-        // Generate
-        let mut question = solution.clone();
-        question.put_random_unknowns(num_unknowns);
-
-        // Output the question & solution
-        output.output_board_with_solution(&question, &solution)?;
+  match options.num_solutions {
+    Some(amount) => {
+      for (i, solution) in solution_iter.take(amount).enumerate() {
+        output_solution(&mut output, &mut rng, &options, i, solution)?;
       }
-    } else {
-
-      // If not, directly output the solution
-      output.output_board(&solution)?;
+    },
+    _ => {
+      for (i, solution) in solution_iter.enumerate() {
+        output_solution(&mut output, &mut rng, &options, i, solution)?;
+      }
     }
   }
 
   // Finish output
-  output.output_finish()?;
-
-  Ok(())
+  output.output_finish()
 }
 
 fn main() -> Result<(), String> {
