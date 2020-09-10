@@ -1,4 +1,4 @@
-use rand::{thread_rng, SeedableRng, rngs::StdRng};
+use rand::{SeedableRng, rngs::StdRng};
 use rand::seq::SliceRandom;
 
 /// Slot is a 2-tuple containing coordinate of the slot
@@ -206,8 +206,14 @@ pub trait Board : Sized + Clone + std::fmt::Debug {
 
   /// Put (`amount`) unknowns at random locations inside the board
   fn put_random_unknowns(&mut self, amount: usize) {
+    self.put_random_unknowns_with_rng(amount, &mut StdRng::from_entropy())
+  }
+
+  /// Put (`amount`) unknowns at random locations inside the board with a specified
+  /// random generator
+  fn put_random_unknowns_with_rng(&mut self, amount: usize, rng: &mut StdRng) {
     let mut all_slots = Self::slots().collect::<Vec<_>>();
-    all_slots.shuffle(&mut thread_rng());
+    all_slots.shuffle(rng);
     for slot in &all_slots[..amount] {
       self.set(slot, Self::Element::default())
     }
