@@ -3,7 +3,7 @@ use sudoku_rs::*;
 #[test]
 fn solve_4x4() {
   let board = Board4x4::default();
-  let mut solutions = board.solve(true);
+  let mut solutions = board.solve();
   println!("{}", solutions.next().unwrap().to_string());
   println!("{}", solutions.next().unwrap().to_string());
   println!("{}", solutions.next().unwrap().to_string());
@@ -17,7 +17,7 @@ fn solve_pre_filled_4x4() {
     4, 3, 2, 1;
     2, 1, 4, 3;
   ];
-  let mut solutions = board.solve(true);
+  let mut solutions = board.solve();
   assert!(solutions.next().is_some());
   assert!(solutions.next().is_none());
 }
@@ -32,7 +32,7 @@ fn solve_pre_filled_4x4_digged() {
   ];
   board.put_random_unknowns(13);
   println!("Digged: {:?}", board);
-  for solution in board.solve(true) {
+  for solution in board.solve() {
     println!("{:?}", solution);
   }
 }

@@ -3,7 +3,7 @@ use sudoku_rs::*;
 #[test]
 fn solve_9x9() {
   let board = Board9x9::default();
-  let mut solutions = board.solve(true);
+  let mut solutions = board.solve();
   println!("{}", solutions.next().unwrap().to_string());
   println!("{}", solutions.next().unwrap().to_string());
   println!("{}", solutions.next().unwrap().to_string());
@@ -34,7 +34,7 @@ fn solve_pre_filled_9x9() {
     0, 3, 0, 7, 0, 0, 0, 2, 0;
     5, 0, 0, 4, 0, 0, 0, 0, 1;
   ];
-  for solution in board.solve(true) {
+  for solution in board.solve() {
     println!("{:?}", solution);
   }
 }

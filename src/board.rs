@@ -1,4 +1,4 @@
-use rand::thread_rng;
+use rand::{thread_rng, SeedableRng, rngs::StdRng};
 use rand::seq::SliceRandom;
 
 /// Slot is a 2-tuple containing coordinate of the slot
@@ -242,6 +242,11 @@ pub trait Board : Sized + Clone + std::fmt::Debug {
     else { FillResult::Unmodified }
   }
 
+  /// Solve with a solving context
+  fn solve_with_ctx(&self, ctx: SolvingContext) -> BoardSolutions<Self> {
+    BoardSolutions { stack: vec![self.clone()], ctx }
+  }
+
   /// Solve the board by returning a solutions iterator.
   ///
   /// ```
@@ -249,8 +254,8 @@ pub trait Board : Sized + Clone + std::fmt::Debug {
   ///   // ...
   /// }
   /// ```
-  fn solve(&self, shuffle: bool) -> BoardSolutions<Self> {
-    BoardSolutions { stack: vec![self.clone()], shuffle }
+  fn solve(&self) -> BoardSolutions<Self> {
+    self.solve_with_ctx(SolvingContext::default())
   }
 }
 
@@ -261,10 +266,49 @@ pub enum FillResult {
   Unsatisfied,
 }
 
+pub enum SolvingContext {
+  Deterministic,
+  Random(StdRng),
+}
+
+impl Default for SolvingContext {
+  fn default() -> Self {
+    Self::Random(StdRng::from_entropy())
+  }
+}
+
+impl SolvingContext {
+  pub fn deterministic() -> Self {
+    Self::Deterministic
+  }
+
+  pub fn random() -> Self {
+    Self::Random(StdRng::from_entropy())
+  }
+
+  pub fn random_with_seed(seed: u64) -> Self {
+    Self::Random(StdRng::seed_from_u64(seed))
+  }
+
+  pub fn is_random(&self) -> bool {
+    match self {
+      Self::Deterministic => false,
+      Self::Random(_) => true,
+    }
+  }
+
+  pub fn rng(&mut self) -> Option<&mut StdRng> {
+    match self {
+      Self::Deterministic => None,
+      Self::Random(rng) => Some(rng)
+    }
+  }
+}
+
 /// Block solutions iterator
 pub struct BoardSolutions<B> where B : Board {
   stack: Vec<B>,
-  shuffle: bool,
+  ctx: SolvingContext,
 }
 
 impl<B> Iterator for BoardSolutions<B> where B : Board {
@@ -294,7 +338,7 @@ impl<B> Iterator for BoardSolutions<B> where B : Board {
 
         // Get all the empty slots
         let mut empty_slots = board.unknown_slots();
-        if self.shuffle { empty_slots.shuffle(&mut thread_rng()) }
+        if let Some(rng) = self.ctx.rng() { empty_slots.shuffle(rng) }
 
         // Iterate all slots to find least constraint one
         for slot in empty_slots {
@@ -309,7 +353,7 @@ impl<B> Iterator for BoardSolutions<B> where B : Board {
 
           // Get all the possible answers
           let mut pos_answers = pos_answers.elements();
-          if self.shuffle { pos_answers.shuffle(&mut thread_rng()) }
+          if let Some(rng) = self.ctx.rng() { pos_answers.shuffle(rng) }
 
           // Add all mutated boards onto the stack
           for pos_answer in pos_answers {

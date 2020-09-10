@@ -10,7 +10,7 @@ extend to even larger sudoku board.
 let board = Board4x4::default();
 
 // It should generate 48 solutions for 4x4 sudoku board
-for solution in board.solve(true) {
+for solution in board.solve() {
   println!("{}", solution);
 }
 ```
@@ -22,7 +22,7 @@ for solution in board.solve(true) {
 let board = Board9x9::default();
 
 // Since there are too many 9x9 solutions, we will only take the first 10
-for solution in board.solve(true).take(10) {
+for solution in board.solve().take(10) {
   println!("{}", solution);
 }
 ```
