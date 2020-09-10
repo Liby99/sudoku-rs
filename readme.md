@@ -77,7 +77,7 @@ The json file will look like this:
 [
   [[3,1,2,4],[2,4,1,3],[4,2,3,1],[1,3,4,2]],
   [[3,1,2,4],[4,2,1,3],[2,4,3,1],[1,3,4,2]],
-  ...
+  // ...
 ]
 ```
 
@@ -104,10 +104,52 @@ sudoku-gen --board-size 4 \
 
 The output json file will look like this:
 
-```
-
+``` json
+[
+  {
+    "q":[[1,0,0,0],[0,0,0,0],[4,0,0,3],[0,1,0,0]],
+    "a":[[1,3,2,4],[2,4,3,1],[4,2,1,3],[3,1,4,2]]
+  },
+  {
+    "q":[[0,0,0,0],[0,3,0,1],[0,2,0,0],[3,0,0,0]],
+    "a":[[1,4,3,2],[2,3,4,1],[4,2,1,3],[3,1,2,4]]
+  },
+  // ...
+]
 ```
 
 ### Solve existing sudoku problem
 
-IN PROGRESS
+Directly pass in the data from command line
+
+- 4x4:
+
+```
+sudoku-solve --board4x4 1 0 0 0 0 0 0 0 4 0 0 3 0 1 0 0
+```
+
+- 9x9:
+
+Similar but you need to use `--board9x9` with 81 numbers supplied after it
+
+You can also use input files:
+
+```
+sudoku-solve --input tests/boards/b9_1.json
+```
+
+with the input file looking like this:
+
+``` json
+[
+  [5, 3, 0, 0, 7, 0, 0, 0, 0],
+  [6, 0, 0, 1, 9, 5, 0, 0, 0],
+  [0, 9, 8, 0, 0, 0, 0, 6, 0],
+  [8, 0, 0, 0, 6, 0, 0, 0, 3],
+  [4, 0, 0, 8, 0, 3, 0, 0, 1],
+  [7, 0, 0, 0, 2, 0, 0, 0, 6],
+  [0, 6, 0, 0, 0, 0, 2, 8, 0],
+  [0, 0, 0, 4, 1, 9, 0, 0, 5],
+  [0, 0, 0, 0, 8, 0, 0, 7, 9]
+]
+```
