@@ -1,6 +1,9 @@
-use structopt::StructOpt;
 use sudoku_rs::*;
+
+use structopt::StructOpt;
 use rand::{Rng, SeedableRng, rngs::StdRng};
+use std::fs::File;
+use std::io::prelude::*;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "sudoku_gen")]
@@ -12,7 +15,7 @@ struct Options {
   /// The amount of solutions we want. If not specified, will fetch
   /// all possible solutions
   #[structopt(long, name = "#SOLUTIONS")]
-  solution_amount: Option<usize>,
+  num_solutions: Option<usize>,
 
   /// Use randomness in the solution generation process
   #[structopt(long)]
@@ -52,61 +55,107 @@ struct Options {
 }
 
 enum Output {
-  File {  },
+  File(File),
   Stdout,
 }
 
 impl Output {
-  fn new(options: &Options) -> Self {
+  fn new(options: &Options) -> Result<Self, String> {
     match &options.output {
       Some(filename) => {
-        Self::File { }
+        let file = File::create(filename).map_err(|_| "Cannot create file")?;
+        Ok(Self::File(file))
       },
       None => {
-        Self::Stdout
+        Ok(Self::Stdout)
       }
     }
   }
 
-  fn output_init(&self) -> Result<(), String> {
-    Ok(())
-  }
-
-  fn output_separator(&self) -> Result<(), String> {
-    Ok(())
-  }
-
-  fn output_finish(&self) -> Result<(), String> {
-    Ok(())
-  }
-
-  fn output_board<B: Board>(&self, board: &B) -> Result<(), String> {
+  fn is_file(&self) -> bool {
     match self {
-      Self::File {  } => {
-        Ok(())
-      }
-      Self::Stdout => {
-        println!("");
+      Self::File(_) => true,
+      _ => false,
+    }
+  }
+
+  fn write(&mut self, s: &str) -> Result<(), String> {
+    match self {
+      Self::File(file) => {
+        file.write_all(s.as_bytes()).map_err(|_| "Cannot write to file".to_string())
+      },
+      _ => {
+        println!("{}", s);
         Ok(())
       }
     }
   }
 
-  fn output_board_with_solution<B: Board>(&self, board: &B, solution: &B) -> Result<(), String> {
-    match self {
-      Self::File {  } => {
-        Ok(())
+  fn output_init(&mut self) -> Result<(), String> {
+    if self.is_file() {
+      self.write("[")
+    } else {
+      Ok(())
+    }
+  }
+
+  fn output_separator(&mut self) -> Result<(), String> {
+    if self.is_file() {
+      self.write(",")
+    } else {
+      Ok(())
+    }
+  }
+
+  fn output_finish(&mut self) -> Result<(), String> {
+    if self.is_file() {
+      self.write("]")
+    } else {
+      Ok(())
+    }
+  }
+
+  fn board_to_json_str<B: Board>(board: &B) -> String {
+    let mut s = "[".to_string();
+    for row in 0..B::size() {
+      if row > 0 { s += ","; }
+      s += "[";
+      for col in 0..B::size() {
+        if col > 0 { s += ","; }
+        s += board.get(&(row, col)).to_string().as_str();
       }
-      Self::Stdout => {
-        println!("");
-        Ok(())
-      }
+      s += "]";
+    }
+    s += "]";
+    s
+  }
+
+  fn output_board<B: Board>(&mut self, board: &B) -> Result<(), String> {
+    if self.is_file() {
+      self.write(&Self::board_to_json_str(board))
+    } else {
+      self.write(&board.to_string())
+    }
+  }
+
+  fn output_board_with_solution<B: Board>(&mut self, board: &B, solution: &B) -> Result<(), String> {
+    if self.is_file() {
+      self.write("{\"q\":")?;
+      self.write(&Self::board_to_json_str(board))?;
+      self.write(",\"a\":")?;
+      self.write(&Self::board_to_json_str(solution))?;
+      self.write("}")
+    } else {
+      self.write("Question: ")?;
+      self.write(&board.to_string())?;
+      self.write("Solution: ")?;
+      self.write(&solution.to_string())
     }
   }
 }
 
 fn execute_on_board<B: Board>(board: B, options: Options) -> Result<(), String> {
-  let output = Output::new(&options);
+  let mut output = Output::new(&options)?;
   let mut rng = match options.seed {
     Some(seed) => StdRng::seed_from_u64(seed),
     None => StdRng::from_entropy(),
@@ -126,7 +175,7 @@ fn execute_on_board<B: Board>(board: B, options: Options) -> Result<(), String> 
   };
 
   // Generate solutions
-  let solutions : Vec<_> = match options.solution_amount {
+  let solutions : Vec<_> = match options.num_solutions {
     Some(amount) => solution_iter.take(amount).collect(),
     _ => solution_iter.collect()
   };
