@@ -44,9 +44,22 @@ fn board_vec_from_file(input_file: &str) -> Result<Vec<u8>, String> {
   let mut file = File::open(input_file).map_err(|_| "Cannot open input file")?;
   let mut contents = String::new();
   file.read_to_string(&mut contents).map_err(|_| "Cannot read from input file")?;
-  let json : Vec<Vec<u8>> = serde_json::from_str(&contents).map_err(|_| "Cannot parse input file")?;
-  let board_vec = json.into_iter().flatten().collect::<Vec<_>>();
-  Ok(board_vec)
+
+  // Parse the nested array [[x, x, ...], [x, x, ...]] format
+  let json : serde_json::Result<Vec<Vec<u8>>> = serde_json::from_str(&contents);
+  if let Ok(json) = json {
+    let board_vec = json.into_iter().flatten().collect::<Vec<_>>();
+    return Ok(board_vec);
+  }
+
+  // Parse the array [x, x, ...] format
+  let json : serde_json::Result<Vec<u8>> = serde_json::from_str(&contents);
+  if let Ok(json) = json {
+    return Ok(json);
+  }
+
+  // If neither passes through, then return error
+  Err("Cannot parse input file".to_string())
 }
 
 fn output_solution<B: Board>(output: &mut Output, i: usize, solution: B) -> Result<(), String> {
