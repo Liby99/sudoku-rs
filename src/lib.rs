@@ -1,5 +1,3 @@
-#![feature(concat_idents)]
-
 mod board;
 #[macro_use]
 mod board4x4;
